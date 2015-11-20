@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2014 The Android Open Source Project
+ * Copyright (C) 2015 Nick Richards <nick@nedrichards.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,19 +40,14 @@ import java.lang.ref.WeakReference;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Digital watch face with seconds. In ambient mode, the seconds aren't displayed. On devices with
- * low-bit ambient mode, the text is drawn without anti-aliasing in ambient mode.
- */
 public class FuzzyTime extends CanvasWatchFaceService {
     private static final Typeface NORMAL_TYPEFACE =
             Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL);
 
     /**
-     * Update rate in milliseconds for interactive mode. We update once a second since seconds are
-     * displayed in interactive mode.
+     * Update rate in milliseconds for interactive mode. Update once a minute since that's when things change.
      */
-    private static final long INTERACTIVE_UPDATE_RATE_MS = TimeUnit.SECONDS.toMillis(1);
+    private static final long INTERACTIVE_UPDATE_RATE_MS = TimeUnit.MINUTES.toMillis(1);
 
     /**
      * Handler message id for updating the time periodically in interactive mode.
@@ -229,12 +225,220 @@ public class FuzzyTime extends CanvasWatchFaceService {
                 canvas.drawRect(0, 0, bounds.width(), bounds.height(), mBackgroundPaint);
             }
 
-            // Draw H:MM in ambient mode or H:MM:SS in interactive mode.
             mTime.setToNow();
-            String text = mAmbient
+            String hourText = null;
+            switch (mTime.hour) {
+                case 0:
+                    hourText = "midnight";
+                    break;
+                case 1:
+                    hourText = "one";
+                    break;
+                case 2:
+                    hourText = "two";
+                    break;
+                case 3:
+                    hourText = "three";
+                    break;
+                case 4:
+                    hourText = "four";
+                    break;
+                case 5:
+                    hourText = "five";
+                    break;
+                case 6:
+                    hourText = "six";
+                    break;
+                case 7:
+                    hourText = "seven";
+                    break;
+                case 8:
+                    hourText = "eight";
+                    break;
+                case 9:
+                    hourText = "nine";
+                    break;
+                case 10:
+                    hourText = "ten";
+                    break;
+                case 11:
+                    hourText = "eleven";
+                    break;
+                case 12:
+                    hourText = "noon";
+                    break;
+                case 13:
+                    hourText = "one";
+                    break;
+                case 14:
+                    hourText = "two";
+                    break;
+                case 15:
+                    hourText = "three";
+                    break;
+                case 16:
+                    hourText = "four";
+                    break;
+                case 17:
+                    hourText = "five";
+                    break;
+                case 18:
+                    hourText = "six";
+                    break;
+                case 19:
+                    hourText = "seven";
+                    break;
+                case 20:
+                    hourText = "eight";
+                    break;
+                case 21:
+                    hourText = "nine";
+                    break;
+                case 22:
+                    hourText = "ten";
+                    break;
+                case 23:
+                    hourText = "eleven";
+                    break;
+            }
+
+            /**
+             * Required time patterns:
+             * $hourname o'clock
+             * five past $hourname
+             * ten past $hourname
+             * quarter past $hourname
+             * twenty past $hourname
+             * twenty five past $hourname
+             * half past $hourname
+             * twenty five to $hourname
+             * twenty to $hourname
+             * quarter to $hourname
+             * ten to $hourname
+             * five to $hourname
+             *
+             * Noon
+             * Midnight
+             */
+
+            String minuteText = null;
+            switch (mTime.minute) {
+                case 58:
+                case 59:
+                case 0:
+                case 1:
+                case 2:
+                    minuteText = " o'clock";
+                    break;
+                case 3:
+                case 4:
+                case 5:
+                case 6:
+                case 7:
+                    minuteText = "five past ";
+                    break;
+                case 8:
+                case 9:
+                case 10:
+                case 11:
+                case 12:
+                    minuteText = "ten past ";
+                    break;
+                case 13:
+                case 14:
+                case 15:
+                case 16:
+                case 17:
+                    minuteText = "quarter past ";
+                    break;
+                case 18:
+                case 19:
+                case 20:
+                case 21:
+                case 22:
+                    minuteText = "twenty past ";
+                    break;
+                case 23:
+                case 24:
+                case 25:
+                case 26:
+                case 27:
+                    minuteText = "twentyfive past ";
+                    break;
+                case 28:
+                case 29:
+                case 30:
+                case 31:
+                case 32:
+                    minuteText = "half past ";
+                    break;
+                case 33:
+                case 34:
+                case 35:
+                case 36:
+                case 37:
+                    minuteText = "twentyfive to ";
+                    break;
+                case 38:
+                case 39:
+                case 40:
+                case 41:
+                case 42:
+                    minuteText = "twenty to ";
+                    break;
+                case 43:
+                case 44:
+                case 45:
+                case 46:
+                case 47:
+                    minuteText = "quarter to ";
+                    break;
+                case 48:
+                case 49:
+                case 50:
+                case 51:
+                case 52:
+                case 53:
+                    minuteText = "ten to ";
+                    break;
+                case 54:
+                case 55:
+                case 56:
+                case 57:
+                    minuteText = "five to ";
+                    break;
+            }
+
+            String timeText = null;
+            switch (mTime.minute) {
+                case 58:
+                case 59:
+                case 0:
+                case 1:
+                case 2:
+                    // make sure to treat midday and midnight correctly
+                    if (mTime.hour == 0) {
+                        timeText = hourText;
+                    }
+                    if (mTime.hour == 12) {
+                        timeText = hourText;
+                    } else {
+                        timeText = hourText + minuteText;
+                    }
+                    break;
+                default:
+                    timeText = minuteText + hourText;
+                    break;
+            }
+
+            /* I'm not treating ambient mode differently, everything is ambient
+                    String text = mAmbient
                     ? String.format("%d:%02d", mTime.hour, mTime.minute)
-                    : String.format("%d:%02d:%02d", mTime.hour, mTime.minute, mTime.second);
+                    : String.format("%d:%02d", mTime.hour, mTime.minute);
+
             canvas.drawText(text, mXOffset, mYOffset, mTextPaint);
+                    */
+            canvas.drawText(timeText, mXOffset, mYOffset, mTextPaint);
         }
 
         /**
@@ -247,6 +451,7 @@ public class FuzzyTime extends CanvasWatchFaceService {
                 mUpdateTimeHandler.sendEmptyMessage(MSG_UPDATE_TIME);
             }
         }
+
 
         /**
          * Returns whether the {@link #mUpdateTimeHandler} timer should be running. The timer should
