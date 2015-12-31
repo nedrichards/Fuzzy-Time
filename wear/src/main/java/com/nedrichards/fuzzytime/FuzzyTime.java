@@ -21,6 +21,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -32,6 +33,9 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
+import android.text.DynamicLayout;
+import android.text.Layout;
+import android.text.TextPaint;
 import android.text.format.Time;
 import android.view.SurfaceHolder;
 import android.view.WindowInsets;
@@ -43,11 +47,17 @@ import java.util.concurrent.TimeUnit;
 public class FuzzyTime extends CanvasWatchFaceService {
     private static final Typeface NORMAL_TYPEFACE =
             Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL);
+    // the legacy type
+
+
+    // this currently crashes as it isn't called from an activity - afaik we don't have an activity here. considering.
+   //AssetManager am = getAssets();
+   //Typeface fontArvo = Typeface.createFromAsset(getAssets(), "fonts/Arvo-Regular.ttf");
 
     /**
-     * Update rate in milliseconds for interactive mode. Update once a minute since that's when things change.
+     * Update rate in milliseconds for interactive mode.
      */
-    private static final long INTERACTIVE_UPDATE_RATE_MS = TimeUnit.MINUTES.toMillis(1);
+    private static final long INTERACTIVE_UPDATE_RATE_MS = TimeUnit.SECONDS.toMillis(1);
 
     /**
      * Handler message id for updating the time periodically in interactive mode.
@@ -83,7 +93,7 @@ public class FuzzyTime extends CanvasWatchFaceService {
         final Handler mUpdateTimeHandler = new EngineHandler(this);
         boolean mRegisteredTimeZoneReceiver = false;
         Paint mBackgroundPaint;
-        Paint mTextPaint;
+        final TextPaint mTextPaint = new TextPaint();
         boolean mAmbient;
         Time mTime;
         final BroadcastReceiver mTimeZoneReceiver = new BroadcastReceiver() {
@@ -117,8 +127,12 @@ public class FuzzyTime extends CanvasWatchFaceService {
             mBackgroundPaint = new Paint();
             mBackgroundPaint.setColor(resources.getColor(R.color.background));
 
-            mTextPaint = new Paint();
-            mTextPaint = createTextPaint(resources.getColor(R.color.digital_text));
+            //mTextPaint = new Paint();
+            mTextPaint.setColor(resources.getColor(R.color.digital_text));
+            mTextPaint.setTextAlign(Paint.Align.CENTER);
+            mTextPaint.setTextSize(18);
+            mTextPaint.setTypeface(NORMAL_TYPEFACE);
+            mTextPaint.setAntiAlias(true);
 
             mTime = new Time();
         }
@@ -128,7 +142,7 @@ public class FuzzyTime extends CanvasWatchFaceService {
             mUpdateTimeHandler.removeMessages(MSG_UPDATE_TIME);
             super.onDestroy();
         }
-
+/*
         private Paint createTextPaint(int textColor) {
             Paint paint = new Paint();
             paint.setColor(textColor);
@@ -136,6 +150,7 @@ public class FuzzyTime extends CanvasWatchFaceService {
             paint.setAntiAlias(true);
             return paint;
         }
+*/
 
         @Override
         public void onVisibilityChanged(boolean visible) {
@@ -438,7 +453,9 @@ public class FuzzyTime extends CanvasWatchFaceService {
 
             canvas.drawText(text, mXOffset, mYOffset, mTextPaint);
                     */
-            canvas.drawText(timeText, mXOffset, mYOffset, mTextPaint);
+            DynamicLayout dynamicLayout = new DynamicLayout(timeText, mTextPaint, bounds.width(),
+                    Layout.Alignment.ALIGN_CENTER, 1, 1, true);
+            dynamicLayout.draw(canvas);
         }
 
         /**
