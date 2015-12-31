@@ -21,7 +21,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -39,6 +38,9 @@ import android.text.TextPaint;
 import android.text.format.Time;
 import android.view.SurfaceHolder;
 import android.view.WindowInsets;
+//import android.widget.FrameLayout;
+//import android.view.LayoutInflater;
+//import android.content.res.AssetManager;
 
 import java.lang.ref.WeakReference;
 import java.util.TimeZone;
@@ -57,7 +59,7 @@ public class FuzzyTime extends CanvasWatchFaceService {
     /**
      * Update rate in milliseconds for interactive mode.
      */
-    private static final long INTERACTIVE_UPDATE_RATE_MS = TimeUnit.SECONDS.toMillis(1);
+    private static final long INTERACTIVE_UPDATE_RATE_MS = TimeUnit.MINUTES.toMillis(1);
 
     /**
      * Handler message id for updating the time periodically in interactive mode.
@@ -105,6 +107,11 @@ public class FuzzyTime extends CanvasWatchFaceService {
         };
         float mXOffset;
         float mYOffset;
+
+        /** Width specified when {@link #mLayout} was created. */
+        int mLayoutWidth;
+        /** Layout to wrap text onto multiple lines. */
+        DynamicLayout mLayout;
 
         /**
          * Whether the display supports fewer bits for each color in ambient mode. When true, we
@@ -241,6 +248,8 @@ public class FuzzyTime extends CanvasWatchFaceService {
             }
 
             mTime.setToNow();
+
+            // time text patterns, Java seems to make selecting these really annoying
             String hourText = null;
             switch (mTime.hour) {
                 case 0:
@@ -316,26 +325,6 @@ public class FuzzyTime extends CanvasWatchFaceService {
                     hourText = "eleven";
                     break;
             }
-
-            /**
-             * Required time patterns:
-             * $hourname o'clock
-             * five past $hourname
-             * ten past $hourname
-             * quarter past $hourname
-             * twenty past $hourname
-             * twenty five past $hourname
-             * half past $hourname
-             * twenty five to $hourname
-             * twenty to $hourname
-             * quarter to $hourname
-             * ten to $hourname
-             * five to $hourname
-             *
-             * Noon
-             * Midnight
-             */
-
             String minuteText = null;
             switch (mTime.minute) {
                 case 58:
@@ -448,14 +437,38 @@ public class FuzzyTime extends CanvasWatchFaceService {
 
             /* I'm not treating ambient mode differently, everything is ambient
                     String text = mAmbient
-                    ? String.format("%d:%02d", mTime.hour, mTime.minute)
-                    : String.format("%d:%02d", mTime.hour, mTime.minute);
+            canvas.drawText(timeText, mXOffset, mYOffset, mTextPaint);
+            */
 
-            canvas.drawText(text, mXOffset, mYOffset, mTextPaint);
-                    */
+            // find the center of the screen in order to translate from the middle of the screen
+            int width = bounds.width();
+            int height = bounds.height();
+            float textWidthFloat = width - mXOffset;
+            int textWidth;
+            textWidth = Math.round(textWidthFloat);
+            float centerX = width / 2f;
+            float centerY = height / 2f;
+
+            //Create or update mLayout if necessary.
+            if (mLayout == null || mLayoutWidth != textWidth) {
+                mLayoutWidth = textWidth;
+                mLayout = new DynamicLayout(timeText, mTextPaint, mLayoutWidth,
+                        Layout.Alignment.ALIGN_NORMAL, 1 /* spacingMult */, 0 /* spacingAdd */,
+                        false /* includePad */);
+            }
+
+            canvas.save();
+            canvas.translate(mXOffset, mYOffset);
+
+
+            mLayout.draw(canvas);
+            canvas.restore();
+            /* working dynamic layout that's drawn off the top right edge
+
             DynamicLayout dynamicLayout = new DynamicLayout(timeText, mTextPaint, bounds.width(),
                     Layout.Alignment.ALIGN_CENTER, 1, 1, true);
-            dynamicLayout.draw(canvas);
+
+            dynamicLayout.draw(canvas); */
         }
 
         /**
