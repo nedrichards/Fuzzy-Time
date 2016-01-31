@@ -449,6 +449,7 @@ public class FuzzyTime extends CanvasWatchFaceService {
             float centerX = width / 2f;
             float centerY = height / 2f;
 
+            //@TODO actually center the text vertically, right margin may not be happening
             //Create or update mLayout if necessary.
             if (mLayout == null || mLayoutWidth != textWidth) {
                 mLayoutWidth = textWidth;
@@ -493,6 +494,7 @@ public class FuzzyTime extends CanvasWatchFaceService {
 
         /**
          * Handle updating the time periodically in interactive mode.
+         * @TODO is this even happening, time is not updating
          */
         private void handleUpdateTimeMessage() {
             invalidate();
